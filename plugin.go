@@ -12,6 +12,15 @@ import (
 // ChocolateyPlugin implements the Publish packages to Chocolatey (Windows) plugin.
 type ChocolateyPlugin struct{}
 
+// Config represents the Chocolatey plugin configuration.
+type Config struct {
+	PackageID string
+	APIKey    string
+	Source    string
+	NuspecDir string
+	Timeout   int
+}
+
 // GetInfo returns plugin metadata.
 func (p *ChocolateyPlugin) GetInfo() plugin.Info {
 	return plugin.Info{
@@ -54,5 +63,25 @@ func (p *ChocolateyPlugin) Execute(ctx context.Context, req plugin.ExecuteReques
 // Validate validates the plugin configuration.
 func (p *ChocolateyPlugin) Validate(_ context.Context, config map[string]any) (*plugin.ValidateResponse, error) {
 	vb := helpers.NewValidationBuilder()
+	parser := helpers.NewConfigParser(config)
+
+	packageID := parser.GetString("package_id", "", "")
+	if packageID == "" {
+		vb.AddError("package_id", "Chocolatey package ID is required")
+	}
+
 	return vb.Build(), nil
+}
+
+// parseConfig parses the plugin configuration with defaults and environment variable fallbacks.
+func (p *ChocolateyPlugin) parseConfig(raw map[string]any) *Config {
+	parser := helpers.NewConfigParser(raw)
+
+	return &Config{
+		PackageID: parser.GetString("package_id", "", ""),
+		APIKey:    parser.GetString("api_key", "CHOCOLATEY_API_KEY", ""),
+		Source:    parser.GetString("source", "", "https://push.chocolatey.org/"),
+		NuspecDir: parser.GetString("nuspec_dir", "", "."),
+		Timeout:   parser.GetInt("timeout", 300),
+	}
 }
