@@ -225,12 +225,12 @@ func TestParseConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear relevant env vars first
-			os.Unsetenv("CHOCOLATEY_API_KEY")
+			_ = os.Unsetenv("CHOCOLATEY_API_KEY")
 
 			// Set env vars for this test
 			for k, v := range tt.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				_ = os.Setenv(k, v)
+				defer func(key string) { _ = os.Unsetenv(key) }(k)
 			}
 
 			cfg := p.parseConfig(tt.config)
